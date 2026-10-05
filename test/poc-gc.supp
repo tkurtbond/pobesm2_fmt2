@@ -10,7 +10,7 @@
 # value of size 8" with DrainMarkStack as the top frame, which
 # --track-origins=yes traces to "a stack allocation" in a frame of the
 # program (Besm2Grid.ProcessEntity, for enyon-boase-2e.yaml; confirmed
-# 2026-10-05, poc 0.1.0).  That is how a conservative collector works,
+# 2026-10-05, poc 0.2.0).  That is how a conservative collector works,
 # not a bug in the program.
 #
 # Only that error kind, and only when that function is the top frame.

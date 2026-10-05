@@ -9,8 +9,8 @@ or `test/regs.sh`, that is how obesm2_fmt2 was built, not this repo.
 
 ## Port to poc `[done]`
 
-Started 2026-10-05 from obesm2_fmt2 `c37918a`, with poc 0.1.0 (the
-Peaseblossom RPM), following polibfyaml's port of olibfyaml.
+Started 2026-10-05 from obesm2_fmt2 `c37918a`, with poc 0.2.0 (the
+Peaseblossom RPM, `peaseblossom-0.2.0-1.fc44`), following polibfyaml's port of olibfyaml.
 
 **Target:** the same program, built by the installed poc under `-OC`,
 with `Ropes.Mod`, `ArgParser.Mod` and polibfyaml's modules (`FyThin.Mod`,
@@ -31,8 +31,9 @@ valgrind` clean.
   procedure (inline C); it is now an external procedure,
   `PROCEDURE ["C", "strerror"] strerror(e: SYSTEM.INT32): SYSTEM.ADDRESS`,
   with C's `int` written `SYSTEM.INT32` as poc's runtime does. It is
-  unexported, so poc 0.1.0's problem with exported external procedures
-  (polibfyaml's AGENTS.md) doesn't arise. Everything else, `Platform`,
+  unexported. (polibfyaml's AGENTS.md says poc 0.1.0 couldn't call an
+  exported external procedure from another module; 0.2.0 can, confirmed
+  with a throwaway program, so that no longer matters.) Everything else, `Platform`,
   `Files`, `Out`, `Err`, `Strings`, `Modules`, compiled unchanged:
   poc's runtime keeps voc's interfaces.
 - **`rtl/Args.Mod` is gone.** It stood in for voc's `Args`, which is

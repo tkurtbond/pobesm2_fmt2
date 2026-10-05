@@ -211,9 +211,10 @@ notes for the details.
   parameter** outside its module; pass it by value.
 - **C is called through external procedures**,
   `PROCEDURE ["C", "name"] P(...)`, with C's `int` as `SYSTEM.INT32`;
-  voc's inline-C code procedures don't exist in poc. Keep them
-  unexported: poc 0.1.0 can't call an exported one from another module
-  (polibfyaml's AGENTS.md).
+  voc's inline-C code procedures don't exist in poc. poc 0.1.0
+  couldn't call an exported one from another module (polibfyaml's
+  AGENTS.md); 0.2.0, the version this repo was ported with, can
+  (confirmed).
 - **`SYSTEM.ADDRESS` is its own type** in poc, not `LONGINT`.
 - **A poc runtime trap** prints what happened and exits with poc's own
   status (a failed `ASSERT` 10, NIL dereference 4; poc's users guide,
