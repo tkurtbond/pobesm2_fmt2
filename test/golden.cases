@@ -1,0 +1,112 @@
+# Golden-output cases for test/golden.sh (the Buffer port's PLAN.md,
+# section 8).
+# Step numbers below are the Buffer port's; the empty-* fixtures were
+# added here (PLAN.md, step 7).
+#
+# One case per line: REF[:MODE...] ID FIXTURES FLAGS...
+#   REF       the program whose output is the reference: "ada" (the Ada
+#             besm2_fmt, $ADA_BESM2_FMT) or "scheme" (besm2-rst,
+#             $SCHEME_BESM2_RST), used only where the Ada version is
+#             known to be wrong and the port follows besm2-rst.scm
+#             (none at present)
+#   MODE      how the program is run and what is compared, as many as
+#             apply (step 9):
+#               stdout  standard output only; for input errors, whose
+#                       messages differ from the Ada version's on
+#                       purpose (the Buffer port's PLAN.md, section 5)
+#               all     every matching fixture in one run, as several
+#                       file arguments; the golden file is ID.out
+#               stdin   the fixture on standard input, not as an
+#                       argument
+#               file    with -o, to a scratch file; the golden file
+#                       holds standard output and error, a
+#                       "==== -o file ====" line, then the file
+#   ID        names the golden files: test/golden/FIXTURE.ID.out
+#   FIXTURES  a shell glob in test/data, without ".yaml" (extglob is
+#             on, so @(a|b) works); several files in "all" mode are
+#             given in the glob's (sorted) order
+#   FLAGS     the command-line options, before the fixtures' paths
+# Blank lines and lines starting with # are ignored.  Golden files hold
+# standard output and standard error together unless the mode says
+# otherwise.  A case that exits 1 (bad input, reported) ends its golden
+# file with a "==== exit 1 ====" line; any other status but 0 fails.
+
+# ---- terse (step 5) ----
+ada    t          *-2e   -t
+ada    s-t        *-2e   -s -t
+ada    t-bold     *-2e   -t -b -l -M
+ada    t-italic   *-2e   -t -i -n
+ada    t-bold-it  *-2e   -t -b -i
+ada    t-page     *-2e   -t -p
+ada    t-page-D   *-2e   -t -p -D
+ada    t-under    *-2e   -t -u = -U ~
+ada    t-last     *-2e   -H -m -t
+
+# ---- grid, the default (step 6) ----
+ada    grid       *-2e
+ada    s          *-2e   -s
+ada    one        *-2e   -1
+ada    one-s-B    *-2e   -1 -s -B
+ada    no-bold    *-2e   -B -D
+ada    ascii      *-2e   -s -n
+ada    w72        *-2e   -w 72
+ada    w25        *-2e   -w 25
+ada    under      *-2e   -u = -U ~
+ada    emph       *-2e   -b -i -l -M -p
+
+# ---- h-m-m (step 7) ----
+ada    hmm        *-2e   -H
+ada    hmm-s      *-2e   -H -s
+ada    hmm-S      *-2e   -H -S
+ada    hmm-sS     *-2e   -H -s -S
+ada    hmm-bold   *-2e   -H -b
+ada    hmm-emph   *-2e   -H -i -l -M
+ada    hmm-L2     *-2e   -H -L 2
+ada    hmm-D-n    *-2e   -H -D -n
+ada    hmm-root   *-2e   -H -R Root -L 1
+ada    t-hmm      *-2e   -t -H
+
+# ---- raw ms (step 8) ----
+ada    ms         *-2e   -m
+ada    ms-s       *-2e   -m -s
+ada    ms-s-n     *-2e   -m -s -n
+ada    ms-D       *-2e   -m -D
+ada    ms-emph    *-2e   -m -b -i -l -M -p
+ada    ms-under   *-2e   -m -u = -U ~
+ada    ms-one     *-2e   -m -1 -B -w 30
+ada    hmm-t-ms   *-2e   -H -t -m
+
+# ---- input errors, several files, standard input, -o (step 9) ----
+# Only standard output is compared for bad input: the messages differ
+# from the Ada version's on purpose (the Buffer port's PLAN.md, section 5), and
+# test/cli.sh checks them.  What matters here is that a bad entity
+# writes nothing, that the entities around it are written, and that a
+# YAML error ends its file.
+ada:stdout      bad        @(bad|shape)-*    -t
+ada:stdout      bad-grid   @(bad|shape)-*
+ada:stdout      bad-m      @(bad|shape)-*    -m
+ada             edge       edge-*
+ada             edge-t     edge-*   -t
+ada             edge-H     edge-*   -H
+ada             edge-m     edge-*   -m
+# Several files in one run: entity numbers (for -U) start again with
+# each file, and a bad file doesn't end the run.
+ada:all         files      *-2e     -U ~
+ada:all         files-t    *-2e     -t -U ~
+ada:all         files-m    *-2e     -m -U ~
+ada:all         files-H    *-2e     -H -R Root
+ada:all:stdout  files-bad  @(bad-int|composite-2e|bad-root|enyon-boase-2e)   -t
+# Standard input, and -o.
+ada:stdin       stdin      composite-multi-doc-2e   -U ~
+ada:stdin       stdin-t    composite-multi-doc-2e   -t
+ada:stdin:stdout stdin-bad bad-root   -t
+ada:file        o          @(enyon-boase-2e|composite-multi-doc-2e)   -t
+ada:file        o-grid     composite-2e
+ada:file:all    o-files    *-2e     -m -U ~
+ada:file        o-R        composite-2e   -H -R Root -L 1
+
+# Names equal but for case keep their document order (the Buffer port's
+# PLAN.md, step 5).  Once a "scheme" case, while the Ada sort wasn't
+# stable (step 14).
+ada    t          sort-ties   -t
+ada    grid       sort-ties

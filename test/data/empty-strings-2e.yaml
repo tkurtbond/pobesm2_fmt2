@@ -1,0 +1,24 @@
+---
+# Strings that are present but empty: each is still written (an empty
+# header line and underline, "**" for the tagline, a blank description
+# line, "**Size:** "), unlike an absent one.  With ropes the empty
+# string is NIL, so presence is a flag of its own (PLAN.md, section 2).
+- name: ""
+  tagline: ""
+  description: ""
+  size: ""
+  stats:
+    - {name: Body, value: 4, points: 4}
+- name: Tagline that trims to nothing
+  tagline: "   "
+  attributes:
+    - {name: Empty Effective, level: 2, points: 2, effective: "", details: ""}
+    - {name: Blank Details, level: 1, points: 1, details: "  "}
+  defects:
+    - {name: Empty Details, points: -1, details: ""}
+  skills:
+    - {name: No Specialisations, level: 1, points: 1, specialisations: []}
+- stats:
+    - {name: "", value: "", points: 0}
+  derived:
+    - {name: ACV, value: ""}

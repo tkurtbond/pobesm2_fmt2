@@ -1,0 +1,7 @@
+# poc/clang output (.sym, .ll, .o, test programs): see GNUmakefile
+/obj/
+# rendered test output (reST, PDF, HTML)
+/build/
+# the program
+/pobesm2_fmt2
+.~/
