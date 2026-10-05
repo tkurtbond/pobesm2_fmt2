@@ -83,6 +83,8 @@ do. `make install` puts it in `$HOME/local/bin` by default. Set `PREFIX`
 - [PLAN.md](PLAN.md): the port to poc, then obesm2_fmt2's plan: what
   changed from the Buffer port, the build order and the findings of
   each step.
-- obesm2_fmt2's `PERFORMANCE-COMPARISON.md` and
-  `PERFORMANCE-ROPES-VS-BUFFERS.md` measure the voc build;
-  `make perfcompare` here writes `PERFORMANCE-POC-VS-VOC.md`.
+- [PERFORMANCE-COMPARISON.md](PERFORMANCE-COMPARISON.md): timings
+  against the Ada version and the voc build, from `make benchmark`.
+- [PERFORMANCE-POC-VS-VOC.md](PERFORMANCE-POC-VS-VOC.md): this build
+  against the voc build, measured the same way in both repos
+  (instruction counts and CPU time), from `make perfcompare`.
