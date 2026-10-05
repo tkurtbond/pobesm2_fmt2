@@ -86,6 +86,16 @@ port; `make valgrind` passes its 138 runs. A short `make benchmark`
 so take it as a direction, not a measurement (`make perfcompare` is
 the careful one).
 
+`make perfcompare` (2026-10-05, default settings, `PERFORMANCE-POC-VS-VOC.md`)
+confirms it: identical output in every case, and the poc build does
+0.42 of the voc build's instructions and takes 0.42 of its CPU time
+(geometric means over every case and format), with the same peak
+memory. Grid tables gain most (0.25 of the instructions), terse least
+(0.58); on the big inputs CPU time is 0.21 to 0.44 of voc's. Not
+investigated: voc compiles C without optimization (obesm2_fmt2's
+`CFLAGS` also kept gcc off five registers), where poc's clang
+optimizes at `-O2` by default.
+
 **Source being rewritten:** the Oberon-2 `besm2_fmt` in
 `~/Repos/RPG/Tools/obesm2_fmt` ("the Buffer port" below; about 2,440
 lines in `src/`), a port of the Ada `besm2_fmt`, itself a port of
