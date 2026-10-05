@@ -2,15 +2,15 @@
 # from voc to poc, the Peaseblossom Oberon Compiler.  See AGENTS.md and
 # PLAN.md.
 #
-# poc builds a program from its main module's source, finding the
-# modules it imports on the import path (src/, test/ for the tests, and
-# the directories of POC_OBERON_MODULES), and compiles every one of them
-# again on each build, so there is no import order to keep: a new
-# module needs no rule.  FyThin.c, beside the installed FyThin.Mod, is
-# compiled with clang as FyThin's part in C.  What poc writes -- each
+# poc builds a program from its main module's source.  The shared
+# modules come compiled, from the poc libraries argparser, ropes and
+# polibfyaml (FyThin's C part included) on the library path; the
+# program's own modules it finds on the import path (src/, and test/
+# for the tests) and compiles again on each build, so there is no import
+# order to keep: a new module needs no rule.  What poc writes -- each
 # module's .sym, .ll and .o, and the programs -- goes into $(OBJ).
 #
-# Every program writes the shared modules' files into the same $(OBJ),
+# Every program writes this repo's modules' files into the same $(OBJ),
 # so make must not build two at once.
 
 SHELL = bash
@@ -21,22 +21,20 @@ POC      ?= poc
 # gets it.
 POCFLAGS := -OC
 
-# libfyaml's flags: -c-flag for clang compiling FyThin.c, -link for the
-# link.  (On Linux --cflags is empty and --libs is -lfyaml.)
-FYAML_CFLAGS := $(shell pkg-config --cflags libfyaml)
-FYAML_LIBS   := $(shell pkg-config --libs libfyaml)
-LINK := $(foreach f,$(FYAML_CFLAGS),-c-flag $(f)) $(foreach f,$(FYAML_LIBS),-link $(f))
+# libfyaml's link flags: the polibfyaml library doesn't record them.
+# (On Linux, -lfyaml.)
+FYAML_LIBS := $(shell pkg-config --libs libfyaml)
+LINK := $(foreach f,$(FYAML_LIBS),-link $(f))
 
-# ArgParser.Mod is installed by the ArgParser repo, Ropes.Mod by the
-# Ropes repo (each with make -f pocGNUmakefile install), and
-# polibfyaml's modules by polibfyaml (make install), into the first
-# directory of POC_OBERON_MODULES (colon-separated).  None is copied
-# here.  Args and Err come from poc's runtime library, poc-rtl.
-POC_OBERON_MODULES ?= /usr/local/sw/versions/oberon/poc/include
-MODDIRS := $(subst :, ,$(POC_OBERON_MODULES))
-IMPORTS := -import-path src $(foreach d,$(MODDIRS),-import-path $(d))
-vpath %.Mod $(MODDIRS)
-vpath %.c $(MODDIRS)
+# The libraries argparser and ropes are installed by the ArgParser and
+# Ropes repos (make -f pocGNUmakefile install), and polibfyaml by
+# polibfyaml (make install), each in its own directory under
+# POC_OBERON_LIBRARIES.  None of their sources is copied here.  Args and
+# Err come from poc's runtime library, poc-rtl.
+POC_OBERON_LIBRARIES ?= /usr/local/sw/versions/oberon/poc/lib
+SHAREDLIBS := argparser ropes polibfyaml
+LIBPATH := $(foreach l,$(SHAREDLIBS),-library-path $(POC_OBERON_LIBRARIES)/$(l))
+IMPORTS := -import-path src $(LIBPATH)
 
 OBJ   := obj
 BUILD := build
@@ -44,9 +42,10 @@ BUILD := build
 PROGRAM := pobesm2_fmt2
 MAIN    := Besm2Fmt
 
-# Every source a program is built from, for make's dependencies.
-SHAREDSRC := ArgParser.Mod Ropes.Mod FyThin.Mod FyThin.c Fyaml.Mod FyamlStreams.Mod
-PROGSRC   := $(wildcard src/*.Mod)
+# Every source and library a program is built from, for make's
+# dependencies: a reinstalled library rebuilds the programs.
+SHAREDLIBMANIFESTS := $(foreach l,$(SHAREDLIBS),$(wildcard $(POC_OBERON_LIBRARIES)/$(l)/*/OC/$(l).library))
+PROGSRC := $(wildcard src/*.Mod)
 
 # Test support modules, and test programs (test/<name>.Mod, main modules).
 TESTSUPPORT := test/Check.Mod
@@ -56,9 +55,7 @@ TESTBINS    := $(TESTS:%=$(OBJ)/%)
 # Only building needs the shared modules, so the cleaning targets don't
 # check for them.
 ifneq ($(if $(MAKECMDGOALS),$(filter-out clean testclean uninstall golden print-%,$(MAKECMDGOALS)),all),)
-$(if $(wildcard $(addsuffix /ArgParser.Mod,$(MODDIRS))),,$(error ArgParser.Mod is not in POC_OBERON_MODULES ($(POC_OBERON_MODULES)); run make -f pocGNUmakefile install in ~/Repos/Oberon/ArgParser))
-$(if $(wildcard $(addsuffix /Ropes.Mod,$(MODDIRS))),,$(error Ropes.Mod is not in POC_OBERON_MODULES ($(POC_OBERON_MODULES)); run make -f pocGNUmakefile install in ~/Repos/Oberon/Ropes))
-$(if $(wildcard $(addsuffix /Fyaml.Mod,$(MODDIRS))),,$(error Fyaml.Mod is not in POC_OBERON_MODULES ($(POC_OBERON_MODULES)); run make install in ~/Repos/Oberon/polibfyaml))
+$(foreach l,$(SHAREDLIBS),$(if $(wildcard $(POC_OBERON_LIBRARIES)/$(l)/*/OC/$(l).library),,$(error the $(l) library is not in $(POC_OBERON_LIBRARIES)/$(l); $(if $(filter polibfyaml,$(l)),run make install in ~/Repos/Oberon/polibfyaml,run make -f pocGNUmakefile install in ~/Repos/Oberon/$(if $(filter ropes,$(l)),Ropes,ArgParser)))))
 endif
 
 .PHONY: all test compare golden valgrind benchmark perfdata perfcompare rst pdf hmm install uninstall clean testclean
@@ -69,10 +66,10 @@ all: $(PROGRAM)
 $(OBJ):
 	mkdir -p $@
 
-$(PROGRAM): src/$(MAIN).Mod $(PROGSRC) $(SHAREDSRC) | $(OBJ)
+$(PROGRAM): src/$(MAIN).Mod $(PROGSRC) $(SHAREDLIBMANIFESTS) | $(OBJ)
 	$(POC) $(POCFLAGS) $(IMPORTS) -output-dir $(OBJ) $(LINK) -o $@ $<
 
-$(OBJ)/Test%: test/Test%.Mod $(TESTSUPPORT) $(PROGSRC) $(SHAREDSRC) | $(OBJ)
+$(OBJ)/Test%: test/Test%.Mod $(TESTSUPPORT) $(PROGSRC) $(SHAREDLIBMANIFESTS) | $(OBJ)
 	$(POC) $(POCFLAGS) $(IMPORTS) -import-path test -output-dir $(OBJ) $(LINK) -o $@ $<
 
 # Every unit test, run from $(OBJ) (where TestLayout writes its capture

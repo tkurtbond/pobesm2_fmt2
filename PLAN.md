@@ -16,7 +16,8 @@ Peaseblossom RPM, `peaseblossom-0.2.0-1.fc44`), following polibfyaml's port of o
 with `Ropes.Mod`, `ArgParser.Mod` and polibfyaml's modules (`FyThin.Mod`,
 `FyThin.c`, `Fyaml.Mod`, `FyamlStreams.Mod`) from `POC_OBERON_MODULES`
 (default `/usr/local/sw/versions/oberon/poc/include`) in place of
-`VOC_OBERON_MODULES` and an olibfyaml checkout. The executable is
+`VOC_OBERON_MODULES` and an olibfyaml checkout (since replaced by
+compiled poc libraries: the next section). The executable is
 `pobesm2_fmt2`; its messages still say `besm2_fmt`.
 
 **Acceptance criteria:** obesm2_fmt2's, unchanged: `make test` (unit
@@ -128,6 +129,43 @@ Ada version) isn't repeated here. It is in the Buffer port's
 `PLAN.md`, sections 1 to 8, and `ADA-DIFFERENCES.md`, and all of it
 still holds. This plan covers only what changes.
 
+## Shared modules as poc libraries `[done]`
+
+Decided with the user 2026-10-05, after the port. The port took
+ArgParser, Ropes and polibfyaml as sources from `POC_OBERON_MODULES`,
+so poc compiled all of them again on every build. Now each of those
+repos' `install` builds a poc library (`poc -library`), and this repo
+links them compiled: `argparser`, `ropes` and `polibfyaml`, each in
+its own directory under `POC_OBERON_LIBRARIES` (default
+`/usr/local/sw/versions/oberon/poc/lib`), passed to poc with
+`-library-path`. Found while choosing, with poc 0.2.0:
+
+- **A plain `.sym` + `.o` install works too, but has three catches**:
+  poc looks for `<Module>.Mod` on the import path before `.sym`/`.o`,
+  so the source must not be installed beside them (with `Ropes.Mod`
+  back, poc compiled Ropes again); FyThin's C part is a separate
+  `FyThin.c.o`, without which the link fails ("undefined reference to
+  `FyThin.-open-errno`"); and a directory holds one size model ("out/
+  Ropes.o was compiled for -OC, and this is -O2"), where Ropes' and
+  ArgParser's own programs are `-O2` and this one `-OC`. A library has
+  none of these: poc puts each model in `<triple>/<O2|OC>/`, the
+  archive holds `FyThin.c.o`, and the manifest lets poc check the
+  libraries against each other.
+- **One directory per library**, because poc always takes a module
+  from a library on the library path, never from source: with every
+  library in one directory, Ropes' `RopeTool`, which needs
+  `argparser`, would have linked the installed `ropes` instead of the
+  checkout it tests.
+- **A library doesn't record libfyaml's link flags**: `-link -lfyaml`
+  is still given. It does record the poc version, and another poc
+  refuses it, so the libraries are installed again after a poc upgrade.
+- Results: `make test`, `make compare` (1,160 runs against each
+  oracle) and `make valgrind` pass, linking the libraries; a build of
+  the program from scratch takes 0.63 s, from 1.3 s. ArgParser
+  (`test-poc`, 73), Ropes (72) and oberon-tools (188), whose `OModPath`
+  also takes `argparser` now, pass too. The source copies in
+  `/usr/local/sw/versions/oberon/poc/include` were removed.
+
 ## 1. What `Ropes` replaces, and what it doesn't have
 
 | Buffer port (`Besm2Str`) | Here |
@@ -188,8 +226,8 @@ starts with `r := NIL`, as a `Buffer` started with `Reset`.
 
 ## 3. Where `Ropes.Mod` comes from
 
-(For voc; this repo takes it from `POC_OBERON_MODULES`: see "Port to
-poc".)
+(For voc; this repo links the poc library `ropes`: see "Shared modules
+as poc libraries".)
 
 From `VOC_OBERON_MODULES` (default
 `/usr/local/sw/versions/oberon/voc/include`), through the makefile's

@@ -30,12 +30,12 @@ its tests belongs in both.
 | Its binary (an oracle for `make compare`) | `~/Repos/RPG/Tools/obesm2_fmt2/obesm2_fmt2` (build with `make` there) |
 | The Buffer port | `~/Repos/RPG/Tools/obesm2_fmt/` (`src/`, `PLAN.md`, `ADA-DIFFERENCES.md`, `VOC-GC-BUG.md`) |
 | Its binary (the other oracle for `make compare`) | `~/Repos/RPG/Tools/obesm2_fmt/obesm2_fmt` (build with `make` there) |
-| Ropes | `~/Repos/Oberon/Ropes/` (`AGENTS.md`, `Ropes.Mod`, `RopeTest.Mod`, `pocGNUmakefile`); installed copy in `$POC_OBERON_MODULES` |
+| Ropes | `~/Repos/Oberon/Ropes/` (`AGENTS.md`, `Ropes.Mod`, `RopeTest.Mod`, `pocGNUmakefile`); poc library `ropes` in `$POC_OBERON_LIBRARIES/ropes` |
 | Ada program | `~/Repos/RPG/Tools/besm2_fmt/` |
 | Ada binary (the oracle for `make golden`) | `~/Repos/RPG/Tools/besm2_fmt/besm2_fmt` |
 | Original Scheme binary | `~/local/bin/besm2-rst` (on `PATH`) |
-| ArgParser (command-line parsing) | `~/Repos/Oberon/ArgParser/`; installed copy in `$POC_OBERON_MODULES` (default `/usr/local/sw/versions/oberon/poc/include`) |
-| polibfyaml (YAML) | `~/Repos/Oberon/polibfyaml/` (`AGENTS.md`, `src/`, `test/poc-gc.supp`, `test/vg-reachable.sh`); installed copies of `src/` in `$POC_OBERON_MODULES` |
+| ArgParser (command-line parsing) | `~/Repos/Oberon/ArgParser/`; poc library `argparser` in `$POC_OBERON_LIBRARIES/argparser` (default root `/usr/local/sw/versions/oberon/poc/lib`) |
+| polibfyaml (YAML) | `~/Repos/Oberon/polibfyaml/` (`AGENTS.md`, `src/`, `test/poc-gc.supp`, `test/vg-reachable.sh`); poc library `polibfyaml` in `$POC_OBERON_LIBRARIES/polibfyaml` |
 | poc | installed from the Peaseblossom RPM: `/usr/bin/poc`, its runtime library `poc-rtl` under `/usr/lib/poc` |
 | poc source and runtime | `~/Repos/Oberon/Peaseblossom` (`doc/users-guide.md`, section 11 "Coming from voc"; the runtime in `rtl/llvm/`) |
 
@@ -72,22 +72,28 @@ make print-VAR  # show a makefile variable
   default model (32-bit `LONGINT`) but works under `-OC`: see PLAN.md,
   step 1.
 - **Don't copy `Ropes.Mod`, `ArgParser.Mod` or polibfyaml's modules
-  into this repo.** poc finds them on its import path, the directories
-  of `POC_OBERON_MODULES`, where `make -f pocGNUmakefile install` in
-  Ropes and ArgParser and `make install` in polibfyaml put them. A
-  change one of them needs is made in its own repo, tested and
-  installed there, and needs the user's go-ahead.
+  into this repo.** They come compiled, from the poc libraries
+  `argparser`, `ropes` and `polibfyaml`, each in its own directory
+  under `POC_OBERON_LIBRARIES` (default
+  `/usr/local/sw/versions/oberon/poc/lib`), on poc's library path,
+  where `make -f pocGNUmakefile install` in ArgParser and Ropes and
+  `make install` in polibfyaml put them. poc never compiles a module a
+  library on the path has. A change one of them needs is made in its
+  own repo, tested and installed there, and needs the user's go-ahead.
+  **After upgrading poc, reinstall all three**: a library records the
+  poc that built it, and another poc refuses it.
 - **`Args` and `Err` come from poc's runtime library**, poc-rtl, which
   has them under both size models (voc's `-OC` library lacked `Args`;
   obesm2_fmt2 has a shim for it).
-- poc builds a program from its main module, compiling every module it
-  imports from source on every build into `obj/` (`-output-dir`), with
-  `FyThin.c`, beside the installed `FyThin.Mod`, compiled by clang as
-  its part in C. There is no import order to keep and no per-module
-  rule: **a new module in `src/` needs nothing in the makefile**, a
-  new unit test only its name in `TESTS`. Every program rewrites the
-  shared modules' files in `obj/`, so the makefile is `.NOTPARALLEL`.
-  libfyaml's `pkg-config` flags reach poc as `-c-flag` and `-link`.
+- poc builds a program from its main module, linking the libraries'
+  modules (FyThin's C part is in `libpolibfyaml.a`) and compiling this
+  repo's from source on every build into `obj/` (`-output-dir`).
+  There is no import order to keep and no per-module rule: **a new
+  module in `src/` needs nothing in the makefile**, a new unit test
+  only its name in `TESTS`. Every program rewrites this repo's modules'
+  files in `obj/`, so the makefile is `.NOTPARALLEL`. libfyaml's
+  `pkg-config --libs` reach the link as `-link`; the library doesn't
+  record them.
   Add `-verbose` to a poc command to see the clang commands it runs.
 - The main module is `Besm2Fmt`, built as `./pobesm2_fmt2`, named for
   this repo so it can be installed beside the Ada `besm2_fmt` and the

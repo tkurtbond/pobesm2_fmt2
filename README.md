@@ -47,11 +47,13 @@ You need:
 - poc, with its runtime library `poc-rtl`, on `PATH` (override with
   `POC=`), and clang, which poc runs.
 - libfyaml, found through `pkg-config`.
-- `ArgParser.Mod` from ArgParser and `Ropes.Mod` from Ropes, installed
-  by `make -f pocGNUmakefile install` in each of those repos, and
-  polibfyaml's modules, installed by `make install` in
-  `~/Repos/Oberon/polibfyaml`, all into `POC_OBERON_MODULES` (default
-  `/usr/local/sw/versions/oberon/poc/include`).
+- The poc libraries `argparser` and `ropes`, installed by
+  `make -f pocGNUmakefile install` in ArgParser and Ropes, and
+  `polibfyaml`, installed by `make install` in
+  `~/Repos/Oberon/polibfyaml`, each into its own directory under
+  `POC_OBERON_LIBRARIES` (default `/usr/local/sw/versions/oberon/poc/lib`).
+  Install them again after upgrading poc, which refuses a library
+  another version built.
 - For `make valgrind` only, a checkout of polibfyaml at `POLIBFYAML`
   (default `~/Repos/Oberon/polibfyaml`), for its suppressions.
 
