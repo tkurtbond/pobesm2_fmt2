@@ -159,6 +159,15 @@ its own directory under `POC_OBERON_LIBRARIES` (default
 - **A library doesn't record libfyaml's link flags**: `-link -lfyaml`
   is still given. It does record the poc version, and another poc
   refuses it, so the libraries are installed again after a poc upgrade.
+- **Only the archive, shared object, manifest, `.sym` and `.owner`
+  are installed.** `-library` also writes each module's `.o` and `.ll`
+  (and `FyThin.c.o`), but a program needs none of them: with them all
+  removed, the program built statically, with `-shared-libraries` and
+  with `-lto`, and the first two matched the voc build on every
+  `compare.sh` run. poc's own `poc-rtl` ships without them, and `poc
+  -install-library`, which the three repos' `install` now use to copy
+  a library from their build directory, leaves them out: 640 KB
+  installed instead of 2.2 MB.
 - Results: `make test`, `make compare` (1,160 runs against each
   oracle) and `make valgrind` pass, linking the libraries; a build of
   the program from scratch takes 0.63 s, from 1.3 s. ArgParser
