@@ -30,12 +30,12 @@ its tests belongs in both.
 | Its binary (an oracle for `make compare`) | `~/Repos/RPG/Tools/obesm2_fmt2/obesm2_fmt2` (build with `make` there) |
 | The Buffer port | `~/Repos/RPG/Tools/obesm2_fmt/` (`src/`, `PLAN.md`, `ADA-DIFFERENCES.md`, `VOC-GC-BUG.md`) |
 | Its binary (the other oracle for `make compare`) | `~/Repos/RPG/Tools/obesm2_fmt/obesm2_fmt` (build with `make` there) |
-| Ropes | `~/Repos/Oberon/Ropes/` (`AGENTS.md`, `Ropes.Mod`, `RopeTest.Mod`, `pocGNUmakefile`); poc library `ropes` in `$POC_OBERON_LIBRARIES/ropes` |
+| Ropes | `~/Repos/Oberon/Ropes/` (`AGENTS.md`, `Ropes.Mod`, `RopeTest.Mod`, `pocGNUmakefile`); poc library `ropes` in `$POCLIBDIR` |
 | Ada program | `~/Repos/RPG/Tools/besm2_fmt/` |
 | Ada binary (the oracle for `make golden`) | `~/Repos/RPG/Tools/besm2_fmt/besm2_fmt` |
 | Original Scheme binary | `~/local/bin/besm2-rst` (on `PATH`) |
-| ArgParser (command-line parsing) | `~/Repos/Oberon/ArgParser/`; poc library `argparser` in `$POC_OBERON_LIBRARIES/argparser` (default root `/usr/local/sw/versions/oberon/poc/lib`) |
-| polibfyaml (YAML) | `~/Repos/Oberon/polibfyaml/` (`AGENTS.md`, `src/`, `test/poc-gc.supp`, `test/vg-reachable.sh`); poc library `polibfyaml` in `$POC_OBERON_LIBRARIES/polibfyaml` |
+| ArgParser (command-line parsing) | `~/Repos/Oberon/ArgParser/`; poc library `argparser` in `$POCLIBDIR` (default `~/.local/lib/poc`) |
+| polibfyaml (YAML) | `~/Repos/Oberon/polibfyaml/` (`AGENTS.md`, `src/`, `test/poc-gc.supp`, `test/vg-reachable.sh`); poc library `polibfyaml` in `$POCLIBDIR` |
 | poc | installed from the Peaseblossom RPM: `/usr/bin/poc`, its runtime library `poc-rtl` under `/usr/lib/poc` |
 | poc source and runtime | `~/Repos/Oberon/Peaseblossom` (`doc/users-guide.md`, section 11 "Coming from voc"; the runtime in `rtl/llvm/`) |
 
@@ -73,13 +73,14 @@ make print-VAR  # show a makefile variable
   step 1.
 - **Don't copy `Ropes.Mod`, `ArgParser.Mod` or polibfyaml's modules
   into this repo.** They come compiled, from the poc libraries
-  `argparser`, `ropes` and `polibfyaml`, each in its own directory
-  under `POC_OBERON_LIBRARIES` (default
-  `/usr/local/sw/versions/oberon/poc/lib`), on poc's library path,
-  where `make -f pocGNUmakefile install` in ArgParser and Ropes and
-  `make install` in polibfyaml put them. poc never compiles a module a
-  library on the path has. A change one of them needs is made in its
-  own repo, tested and installed there, and needs the user's go-ahead.
+  `argparser`, `ropes` and `polibfyaml`, all in `POCLIBDIR` (default
+  `~/.local/lib/poc`), on poc's library path, where
+  `make -f pocGNUmakefile install` in ArgParser and Ropes and
+  `make install` in polibfyaml put them. The makefile unexports
+  `POC_LIBRARY_PATH`, so `POCLIBDIR` is the only place it takes a
+  library from. poc never compiles a module a library on the path
+  has. A change one of them needs is made in its own repo, tested and
+  installed there, and needs the user's go-ahead.
   **After upgrading poc, reinstall all three**: a library records the
   poc that built it, and another poc refuses it.
 - **`Args` and `Err` come from poc's runtime library**, poc-rtl, which

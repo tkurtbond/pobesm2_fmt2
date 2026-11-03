@@ -50,8 +50,8 @@ You need:
 - The poc libraries `argparser` and `ropes`, installed by
   `make -f pocGNUmakefile install` in ArgParser and Ropes, and
   `polibfyaml`, installed by `make install` in
-  `~/Repos/Oberon/polibfyaml`, each into its own directory under
-  `POC_OBERON_LIBRARIES` (default `/usr/local/sw/versions/oberon/poc/lib`).
+  `~/Repos/Oberon/polibfyaml`, all into `POCLIBDIR` (default
+  `~/.local/lib/poc`).
   Install them again after upgrading poc, which refuses a library
   another version built.
 - For `make valgrind` only, a checkout of polibfyaml at `POLIBFYAML`

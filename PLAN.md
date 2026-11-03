@@ -138,7 +138,9 @@ repos' `install` builds a poc library (`poc -library`), and this repo
 links them compiled: `argparser`, `ropes` and `polibfyaml`, each in
 its own directory under `POC_OBERON_LIBRARIES` (default
 `/usr/local/sw/versions/oberon/poc/lib`), passed to poc with
-`-library-path`. Found while choosing, with poc 0.2.0:
+`-library-path`. (Since 2026-11-02 all of them are in one directory,
+`POCLIBDIR`, by default `~/.local/lib/poc`, as every library repo now
+installs.) Found while choosing, with poc 0.2.0:
 
 - **A plain `.sym` + `.o` install works too, but has three catches**:
   poc looks for `<Module>.Mod` on the import path before `.sym`/`.o`,
