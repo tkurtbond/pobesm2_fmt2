@@ -121,7 +121,7 @@ BEGIN
   Check.Check(Is(a.details, "Damage ACV+45, Long-Range: 5 km, Unreliable"),
     "a block scalar's trailing newline is trimmed from details");
   a := e.attributes.items[10](Besm2Entities.Attribute);
-  msg := Ropes.AppendChar(Ropes.FromString("Damage ACV+45, Auto-fire, Area Effect, Limited Shots ×2: 3 shots,"), 0AX);
+  msg := Ropes.AppendChar(Ropes.FromString("Damage ACV+15, Auto-fire, Area Effect, Limited Shots ×2: 3 shots,"), 0AX);
   Besm2Text.Add(msg, "Stoppable");
   Check.Check(Ropes.Equal(a.details, msg), "an embedded newline is kept in details (the formats deal with it)");
   df := e.defects.items[0](Besm2Entities.Defect);
