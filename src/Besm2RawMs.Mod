@@ -282,7 +282,9 @@ BEGIN
   Line("=");
   Line(".TE");
   (* The blank line ends the raw block before the next entity's name. *)
-  Besm2Out.Ln
+  Besm2Out.Ln;
+
+  Besm2Layout.Notes(e.notes)
 END ProcessEntity;
 
 BEGIN

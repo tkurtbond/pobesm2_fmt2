@@ -93,6 +93,10 @@ TYPE
        and skills sorted by name, ignoring case, as every format of
        besm2-rst.scm sorts them. *)
     stats-, derived-, attributes-, defects-, skills-: List;
+    (* The optional "notes" list, short lines about the entity that
+       aren't priced (besm2_cg_po's PLAN.md, A4): trimmed, in document
+       order, printed after the skills. *)
+    notes-: Besm2Text.List;
     statsTotal-, attributesTotal-, defectsTotal-: INTEGER;
     skillsTotal-: INTEGER;                (* not part of entityTotal, as in besm2-rst.scm *)
     entityTotal-: INTEGER
@@ -401,7 +405,7 @@ END LoadList;
    own (never empty), set, and e NIL.  The minus sign in attribute details depends
    on Besm2Config.unicodeMinus, so parse the command line first. *)
 PROCEDURE Load*(m: Fyaml.Node; VAR e: Entity; VAR yerr: Fyaml.Error; VAR msg: Rope): BOOLEAN;
-  VAR ok: BOOLEAN; i: INTEGER;
+  VAR ok: BOOLEAN; i: INTEGER; notes: Besm2Text.List;
 BEGIN
   yamlError := NIL; message := NIL; e := NIL;
   NEW(e);
@@ -419,12 +423,15 @@ BEGIN
       & LoadList(m, "attributes", LoadAttribute, e.attributes)
       & LoadList(m, "defects", LoadDefect, e.defects)
       & LoadList(m, "skills", LoadSkill, e.skills)
+      & StringList(m, "notes", notes)
   END;
   IF ~ok THEN
     yerr := yamlError; msg := message; e := NIL;
     RETURN FALSE
   END;
   e.tagline := Besm2Text.Trim(e.tagline);
+  Besm2Text.Clear(e.notes);
+  FOR i := 0 TO notes.n - 1 DO Besm2Text.Append(e.notes, Besm2Text.Trim(notes.items[i])) END;
   SortByName(e.attributes); SortByName(e.defects); SortByName(e.skills);
   e.statsTotal := 0; e.attributesTotal := 0; e.defectsTotal := 0; e.skillsTotal := 0;
   FOR i := 0 TO e.stats.n - 1 DO INC(e.statsTotal, e.stats.items[i](Stat).points) END;
