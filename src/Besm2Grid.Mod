@@ -61,6 +61,14 @@ PROCEDURE Points(n: INTEGER): Rope;
 BEGIN RETURN Besm2Text.Int(n)
 END Points;
 
+(* r, with Besm2Layout.OverrideMark after it if marked (an overridden
+   number). *)
+PROCEDURE Mark(r: Rope; marked: BOOLEAN): Rope;
+BEGIN
+  IF marked THEN RETURN Ropes.Cat(r, Besm2Layout.OverrideMark()) END;
+  RETURN r
+END Mark;
+
 (* A defect's points, always negative, with a backslash before the
    sign, since reST would otherwise take a leading "-" for a bullet.
    besm2-rst.scm's process-defect adds the backslash whatever the sign,
@@ -171,7 +179,7 @@ BEGIN
     Headsep3;
     FOR i := 0 TO e.stats.n - 1 DO
       s := e.stats.items[i](Besm2Entities.Stat);
-      Row3(s.value, Points(s.points), s.name);
+      Row3(s.value, Mark(Points(s.points), s.pointsMark), s.name);
       Sep3
     END;
     IF Besm2Config.showSubtotals THEN
@@ -187,7 +195,7 @@ BEGIN
     Headsep2;
     FOR i := 0 TO e.derived.n - 1 DO
       d := e.derived.items[i](Besm2Entities.Derived);
-      Row2(d.value, DerivedDescription(d));
+      Row2(Mark(d.value, d.valueMark), DerivedDescription(d));
       Sep2
     END;
     EmptyOrBlankLine
@@ -199,7 +207,7 @@ BEGIN
     Headsep3;
     FOR i := 0 TO e.attributes.n - 1 DO
       a := e.attributes.items[i](Besm2Entities.Attribute);
-      Row3(a.level, Points(a.points), WithDetails(a.name, a.details));
+      Row3(a.level, Mark(Points(a.points), a.pointsMark), WithDetails(a.name, a.markedDetails));
       Sep3
     END;
     IF Besm2Config.showSubtotals THEN
@@ -215,7 +223,7 @@ BEGIN
     Headsep3;
     FOR i := 0 TO e.defects.n - 1 DO
       df := e.defects.items[i](Besm2Entities.Defect);
-      Row3(NIL, DefectPoints(df.points), WithDetails(df.name, df.details));
+      Row3(NIL, Mark(DefectPoints(df.points), df.pointsMark), WithDetails(df.name, df.details));
       Sep3
     END;
     IF Besm2Config.showSubtotals THEN
@@ -231,7 +239,7 @@ BEGIN
     Headsep3;
     FOR i := 0 TO e.skills.n - 1 DO
       sk := e.skills.items[i](Besm2Entities.Skill);
-      Row3(sk.level, Points(sk.points), SkillDescription(sk));
+      Row3(sk.level, Mark(Points(sk.points), sk.pointsMark), SkillDescription(sk));
       Sep3
     END;
     IF Besm2Config.showSubtotals THEN

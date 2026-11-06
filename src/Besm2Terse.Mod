@@ -10,13 +10,21 @@ IMPORT Besm2Config, Besm2Entities, Besm2Layout, Besm2Out, Besm2Text, Ropes;
 TYPE
   Rope = Ropes.Rope;
 
+(* r, with Besm2Layout.OverrideMark after it if marked (an overridden
+   number). *)
+PROCEDURE Mark(r: Rope; marked: BOOLEAN): Rope;
+BEGIN
+  IF marked THEN RETURN Ropes.Cat(r, Besm2Layout.OverrideMark()) END;
+  RETURN r
+END Mark;
+
 (* "N CP" for points, "N BP" for a negative number (bonus points), or
    "N MP"/"N MBP" for a mecha: the number is always written without a
-   sign. *)
-PROCEDURE LabelPoints(points: INTEGER; mecha: BOOLEAN): Rope;
+   sign, and with Besm2Layout.OverrideMark after it if marked. *)
+PROCEDURE LabelPoints(points: INTEGER; mecha, marked: BOOLEAN): Rope;
   VAR r: Rope;
 BEGIN
-  r := Ropes.AppendChar(Besm2Text.Int(ABS(points)), " ");
+  r := Ropes.AppendChar(Mark(Besm2Text.Int(ABS(points)), marked), " ");
   IF mecha THEN
     IF points < 0 THEN Besm2Text.Add(r, "MBP") ELSE Besm2Text.Add(r, "MP") END
   ELSE
@@ -39,11 +47,11 @@ END NameAndLevel;
 
 (* r, then " (", details and ". " if there are any details, the points,
    and ")": the end of an attribute or a defect. *)
-PROCEDURE WithDetails(r, details: Rope; points: INTEGER; mecha: BOOLEAN): Rope;
+PROCEDURE WithDetails(r, details: Rope; points: INTEGER; mecha, marked: BOOLEAN): Rope;
 BEGIN
   Besm2Text.Add(r, " (");
   IF details # NIL THEN r := Ropes.Cat(r, details); Besm2Text.Add(r, ". ") END;
-  r := Ropes.Cat(r, LabelPoints(points, mecha));
+  r := Ropes.Cat(r, LabelPoints(points, mecha, marked));
   RETURN Ropes.AppendChar(r, ")")
 END WithDetails;
 
@@ -53,14 +61,14 @@ PROCEDURE Stat(s: Besm2Entities.Stat; mecha: BOOLEAN): Rope;
   VAR r: Rope;
 BEGIN
   r := Ropes.Cat(Ropes.AppendChar(s.name, " "), s.value);
-  Besm2Text.Add(r, " ("); r := Ropes.Cat(r, LabelPoints(s.points, mecha));
+  Besm2Text.Add(r, " ("); r := Ropes.Cat(r, LabelPoints(s.points, mecha, s.pointsMark));
   RETURN Ropes.AppendChar(r, ")")
 END Stat;
 
 PROCEDURE Derived(d: Besm2Entities.Derived): Rope;
   VAR r: Rope;
 BEGIN
-  r := Ropes.Cat(Ropes.AppendChar(d.name, " "), d.value);
+  r := Ropes.Cat(Ropes.AppendChar(d.name, " "), Mark(d.value, d.valueMark));
   IF d.alternatives.n > 0 THEN
     Besm2Text.Add(r, " ("); r := Ropes.Cat(r, Besm2Text.Join(d.alternatives, ", "));
     r := Ropes.AppendChar(r, ")")
@@ -70,13 +78,13 @@ END Derived;
 
 PROCEDURE Attribute(a: Besm2Entities.Attribute; mecha: BOOLEAN): Rope;
 BEGIN
-  RETURN WithDetails(Besm2Layout.Emphasizing(NameAndLevel(a.name, a.level)), a.details,
-                     a.points, mecha)
+  RETURN WithDetails(Besm2Layout.Emphasizing(NameAndLevel(a.name, a.level)), a.markedDetails,
+                     a.points, mecha, a.pointsMark)
 END Attribute;
 
 PROCEDURE Defect(d: Besm2Entities.Defect; mecha: BOOLEAN): Rope;
 BEGIN
-  RETURN WithDetails(Besm2Layout.Emphasizing(d.name), d.details, d.points, mecha)
+  RETURN WithDetails(Besm2Layout.Emphasizing(d.name), d.details, d.points, mecha, d.pointsMark)
 END Defect;
 
 PROCEDURE Skill(s: Besm2Entities.Skill): Rope;
@@ -87,7 +95,7 @@ BEGIN
   IF s.specialisations.n > 0 THEN
     r := Ropes.Cat(r, Besm2Text.Join(s.specialisations, ", ")); Besm2Text.Add(r, ". ")
   END;
-  Besm2Text.AddInt(r, s.points); Besm2Text.Add(r, " SP)");
+  r := Ropes.Cat(r, Mark(Besm2Text.Int(s.points), s.pointsMark)); Besm2Text.Add(r, " SP)");
   RETURN r
 END Skill;
 
@@ -120,7 +128,7 @@ END Items;
 PROCEDURE Subtotal(points: INTEGER; mecha: BOOLEAN);
 BEGIN
   IF Besm2Config.showSubtotals THEN
-    Besm2Out.String(" ("); Besm2Out.Rope(LabelPoints(points, mecha)); Besm2Out.Char(")")
+    Besm2Out.String(" ("); Besm2Out.Rope(LabelPoints(points, mecha, FALSE)); Besm2Out.Char(")")
   END
 END Subtotal;
 
@@ -132,7 +140,7 @@ PROCEDURE ProcessEntity*(e: Besm2Entities.Entity; entityNo: INTEGER);
 BEGIN
   IF e.hasName THEN
     header := e.name; Besm2Text.Add(header, " (");
-    header := Ropes.AppendChar(Ropes.Cat(header, LabelPoints(e.entityTotal, e.mecha)), ")");
+    header := Ropes.AppendChar(Ropes.Cat(header, LabelPoints(e.entityTotal, e.mecha, FALSE)), ")");
     IF (entityNo > 1) & (Besm2Config.subunderliner # 0X) THEN underline := Besm2Config.subunderliner
     ELSE underline := Besm2Config.underliner
     END;
@@ -142,7 +150,7 @@ BEGIN
     Besm2Out.Repeat(underline, Ropes.Length(header)); Besm2Out.Ln;
     Besm2Out.Ln
   ELSE
-    Besm2Out.Rope(LabelPoints(e.entityTotal, e.mecha)); Besm2Out.Ln;
+    Besm2Out.Rope(LabelPoints(e.entityTotal, e.mecha, FALSE)); Besm2Out.Ln;
     Besm2Out.Ln
   END;
 

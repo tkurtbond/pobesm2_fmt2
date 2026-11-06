@@ -27,7 +27,7 @@ TYPE
   Rope* = Ropes.Rope;
 
 VAR
-  unicodeMinus, asciiMinus, stars, star, blank: Rope;
+  unicodeMinus, asciiMinus, unicodeTimes, asciiTimes, overrideMark, stars, star, blank: Rope;
   breaks: Ropes.CharSet;   (* where WordWrap may break a line *)
 
 (* r padded with blanks to width characters (DisplayLength, not bytes),
@@ -214,6 +214,24 @@ BEGIN
   RETURN asciiMinus
 END MinusGlyph;
 
+(* MULTIPLICATION SIGN (U+00D7), or "x" under -n/--no-unicode-minus:
+   the "×2" of a Weapon Attack Ability or Disability taken twice
+   (besm2_cg_po's PLAN.md, A4; the book writes "x 2", p. 92).  The
+   Ada Times_Glyph. *)
+PROCEDURE TimesGlyph*(): Rope;
+BEGIN
+  IF Besm2Config.unicodeMinus THEN RETURN unicodeTimes END;
+  RETURN asciiTimes
+END TimesGlyph;
+
+(* What follows an overridden number (`overrides:`, besm2_cg_po's
+   PLAN.md, A4) in the terse and grid formats: "*", escaped so that
+   reST doesn't read it as the start of emphasis.  The Ada
+   Override_Mark. *)
+PROCEDURE OverrideMark*(): Rope;
+BEGIN RETURN overrideMark
+END OverrideMark;
+
 (* The entity's notes, if any, as a reStructuredText bullet list after a
    bold "Notes:" paragraph, one note per item, the lines after a note's
    first indented two blanks so it stays one item: the terse, grid and
@@ -240,6 +258,9 @@ END Notes;
 BEGIN
   unicodeMinus := Ropes.FromString("−");   (* U+2212, UTF-8 E2 88 92 *)
   asciiMinus := Ropes.FromString("-");
+  unicodeTimes := Ropes.FromString("×");   (* U+00D7, UTF-8 C3 97 *)
+  asciiTimes := Ropes.FromString("x");
+  overrideMark := Ropes.FromString("\*");
   stars := Ropes.FromString("**"); star := Ropes.FromString("*");
   blank := Ropes.FromString(" ");
   Ropes.MakeCharSet(" ", breaks);

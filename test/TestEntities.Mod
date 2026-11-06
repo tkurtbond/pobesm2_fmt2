@@ -182,6 +182,56 @@ BEGIN
   Check.Check(FromText('- {name: X}') & (e.notes.n = 0), "no notes")
 END Misc;
 
+(* The keys of besm2_cg_po's PLAN.md, A4; expected values from the Ada
+   binary's terse output for test/data/keys-ext.yaml.  The names are
+   longer than Ropes.ShortLeafLength, so the ropes have several
+   leaves. *)
+PROCEDURE Extensions;
+  CONST
+    Weapon = '- {attributes: [{name: Weapon Attack, subject: "  Spark Lance ", level: 3, points: 12, primary: true, damage: 60, abilities: [Area Effect, Long Range], disabilities: [{name: Limited Shots, counts-as: 2, detail: " 3 shots "}, Slow], different-gunner: true, choices: [{name: zz, detail: no}, Aa], details: Personal Gear, overrides: [damage]}]}';
+  VAR a: Besm2Entities.Attribute; df: Besm2Entities.Defect;
+BEGIN
+  Check.Check(FromText(Weapon), "a Weapon Attack with every new key loads");
+  IF e = NIL THEN RETURN END;
+  a := e.attributes.items[0](Besm2Entities.Attribute);
+  Check.Check(Is(a.name, "Weapon Attack: Spark Lance"), "subject after the name and a colon, trimmed");
+  Check.Check(Is(a.details, "Area Effect, Long Range, Limited Shots ×2 [3 shots], Slow, Different Gunner, 60 Damage; Aa, zz; Personal Gear"),
+    "weapon keys; choices sorted, their detail ignored; details text");
+  Check.Check(Is(a.markedDetails, "Area Effect, Long Range, Limited Shots ×2 [3 shots], Slow, Different Gunner, 60\* Damage; Aa, zz; Personal Gear"),
+    "an overridden damage is marked in markedDetails only");
+  Check.Check(~a.pointsMark, "points not overridden");
+  Besm2Config.unicodeMinus := FALSE;
+  IF FromText(Weapon) THEN a := e.attributes.items[0](Besm2Entities.Attribute) END;
+  Check.Check(Ropes.ContainsPattern(a.details, "Limited Shots x2 [3 shots]", 0), "-n gives an ASCII times sign");
+  Besm2Config.unicodeMinus := TRUE;
+  Check.Check(FromText('- {attributes: [{name: Weapon Attack, level: 1, points: 3, damage: 20, overrides: [points, damage]}]}'),
+    "a weapon with only damage loads");
+  a := e.attributes.items[0](Besm2Entities.Attribute);
+  Check.Check(Is(a.details, "20 Damage") & Is(a.markedDetails, "20\* Damage") & a.pointsMark,
+    "damage alone; points and damage overridden");
+  Check.Check(FromText('- {defects: [{name: Unique Character Defect, subject: Afraid of the Dark, level: 2, points: -2, overrides: [points]}], stats: [{name: Body, value: 4, points: 4, overrides: [points]}], derived: [{name: DCV, value: 4, overrides: [value]}], skills: [{name: Driving, level: 1, points: 1, overrides: []}]}'),
+    "defect, stat, derived and skill overrides load");
+  df := e.defects.items[0](Besm2Entities.Defect);
+  Check.Check(Is(df.name, "Unique Character Defect: Afraid of the Dark") & df.pointsMark
+    & e.stats.items[0](Besm2Entities.Stat).pointsMark
+    & e.derived.items[0](Besm2Entities.Derived).valueMark
+    & ~e.skills.items[0](Besm2Entities.Skill).pointsMark, "the marks are set as overridden");
+  FailsWith('- {attributes: [{name: A, level: 1, points: 1, overrides: [pionts]}]}',
+    '/0/attributes/0/overrides/0: "pionts" is not one of points, damage', "a misspelt override");
+  FailsWith('- {derived: [{name: DCV, value: 4, overrides: [points]}]}',
+    '/0/derived/0/overrides/0: "points" is not one of value', "a derived value has only value");
+  FailsWith('- {skills: [{name: D, level: 1, points: 1, overrides: [[points]]}]}',
+    "/0/skills/0/overrides/0: an override is not a key name", "an override that isn't a name");
+  FailsWith('- {attributes: [{name: A, level: 1, points: 1, disabilities: [[x]]}]}',
+    "/0/attributes/0/disabilities/0: not a name or a mapping", "a Disability that is a list");
+  FailsWith('- {attributes: [{name: A, level: 1, points: 1, choices: [{name: x, counts-as: 0}]}]}',
+    "/0/attributes/0/choices/0/counts-as: counts-as must be positive", "a choice's counts-as of 0");
+  YamlFails('- {attributes: [{name: A, level: 1, points: 1, abilities: [{detail: x}]}]}', Fyaml.MissingKey,
+    "an Ability with no name");
+  YamlFails('- {attributes: [{name: A, level: 1, points: 1, different-gunner: 1}]}', Fyaml.DataError,
+    "different-gunner must be a boolean")
+END Extensions;
+
 PROCEDURE Errors;
 BEGIN
   YamlFails('- {stats: [{name: B, value: 3}]}', Fyaml.MissingKey, "a missing points is a MissingKey error");
@@ -212,5 +262,6 @@ BEGIN
   Customizers;
   Misc;
   Errors;
+  Extensions;
   Check.Summary
 END TestEntities.

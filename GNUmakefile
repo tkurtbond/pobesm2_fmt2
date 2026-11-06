@@ -78,14 +78,16 @@ $(OBJ)/Test%: test/Test%.Mod $(TESTSUPPORT) $(PROGSRC) $(SHAREDLIBMANIFESTS) | $
 
 # Every unit test, run from $(OBJ) (where TestLayout writes its capture
 # files), then the command-line checks of test/cli.sh, then the
-# golden-output comparison of test/golden.sh; fail at the end if any
-# failed.
+# golden-output comparison of test/golden.sh, then the upgraded
+# fixtures against their originals (test/upgraded.sh); fail at the end
+# if any failed.
 test: $(PROGRAM) $(TESTBINS)
 	@status=0; for t in $(TESTS); do \
 	  echo "== $$t"; (cd $(OBJ) && ./$$t) || status=1; \
 	done; \
 	echo "== cli.sh"; test/cli.sh ./$(PROGRAM) || status=1; \
 	echo "== golden.sh"; test/golden.sh check ./$(PROGRAM) || status=1; \
+	echo "== upgraded.sh"; test/upgraded.sh ./$(PROGRAM) || status=1; \
 	exit $$status
 
 # The program under valgrind (the Buffer port's PLAN.md, step 11;
