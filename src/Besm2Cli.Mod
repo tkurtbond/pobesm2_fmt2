@@ -8,7 +8,11 @@ MODULE Besm2Cli; (* The command line: options into Besm2Config, file names into 
    ArgParser has no options that just set a variable (the Ada
    Make_Set_Boolean_True_Option and friends), so each option has its own
    handler.  Oberon has no closures, so the handlers are module-level
-   procedures setting Besm2Config's variables. *)
+   procedures setting Besm2Config's variables.
+
+   Parse is besm2_fmt's command line.  NewParser gives another program
+   (besm2_cg_po's besm2_calc_po) the same options, in a parser it can
+   add its own to before it parses. *)
 
 IMPORT ArgParser, Besm2Config, Besm2Text, Err, Out, Platform, Ropes, Strings;
 
@@ -25,6 +29,7 @@ VAR
   helpShown-: BOOLEAN;
 
   parser: ArgParser.Parser;
+  program: ARRAY 32 OF CHAR;   (* for OneChar's message: "besm2_fmt" *)
 
 (* -u/--underliner and -U/--subunderliner take one character.  Anything
    else is an error, with ArgParser's status for command-line mistakes.
@@ -36,7 +41,7 @@ PROCEDURE OneChar(VAR arg: ARRAY OF CHAR; names: ARRAY OF CHAR; VAR c: CHAR);
 BEGIN
   IF Strings.Length(arg) # 1 THEN
     Out.Flush;
-    Err.String("besm2_fmt: "); Err.String(names);
+    Err.String(program); Err.String(": "); Err.String(names);
     Err.String(' takes exactly one character, got "'); Err.String(arg); Err.String('"'); Err.Ln;
     Platform.Exit(ArgParser.UsageErrorStatus)
   END;
@@ -153,11 +158,13 @@ PROCEDURE Opt(o: ArgParser.Option);
 BEGIN parser.AddOption(o)
 END Opt;
 
-(* Parses the command line into Besm2Config and files.  A mistake on the
-   command line ends the program with ArgParser.UsageErrorStatus (2),
-   from ArgParser or OneChar.  Check helpShown afterwards. *)
-PROCEDURE Parse*;
+(* A parser of besm2_fmt's options, for the program name (for OneChar's
+   message) whose usage line is usage.  Its options set Besm2Config,
+   its file names go into files, and -h/--help sets helpShown. *)
+PROCEDURE NewParser*(name, usage: ARRAY OF CHAR): ArgParser.Parser;
 BEGIN
+  COPY(name, program);
+  parser := ArgParser.NewParser(usage, DoArgument);
   Opt(ArgParser.MakeOption("1", "one", "Use only one table.", DoOne));
   Opt(ArgParser.MakeOption("B", "no-bold-head",
     "Turns OFF bolding of headers in plain reST output.", DoNoBoldHead));
@@ -195,11 +202,20 @@ BEGIN
      the first such row, with status 2 (the Buffer port's PLAN.md,
      section 5). *)
   Opt(ArgParser.MakeIntOption("w", "width", "Width of table in characters.", DoWidth, 25, MAX(INTEGER)));
-  parser.ParseArguments(1)
+  RETURN parser
+END NewParser;
+
+(* Parses the command line into Besm2Config and files.  A mistake on the
+   command line ends the program with ArgParser.UsageErrorStatus (2),
+   from ArgParser or OneChar.  Check helpShown afterwards. *)
+PROCEDURE Parse*;
+  VAR p: ArgParser.Parser;
+BEGIN
+  p := NewParser("besm2_fmt", "besm2_fmt [options] [files...]");
+  p.ParseArguments(1)
 END Parse;
 
 BEGIN
   Besm2Text.Clear(files);
-  helpShown := FALSE;
-  parser := ArgParser.NewParser("besm2_fmt [options] [files...]", DoArgument)
+  helpShown := FALSE
 END Besm2Cli.
