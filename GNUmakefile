@@ -53,7 +53,7 @@ PROGSRC := $(wildcard src/*.Mod)
 
 # Test support modules, and test programs (test/<name>.Mod, main modules).
 TESTSUPPORT := test/Check.Mod
-TESTS       := TestText TestLayout TestEntities
+TESTS       := TestText TestLayout TestEntities TestOut
 TESTBINS    := $(TESTS:%=$(OBJ)/%)
 
 # Only building needs the shared modules, so the cleaning targets don't

@@ -10,7 +10,11 @@ MODULE Besm2Out; (* Where the program's output goes: standard output or a file *
    interface) defers creating it to Register and then fails there.
    Output is buffered (poc's Out buffers nothing, and writes each call
    at once), so call Close, or Flush, before exiting or writing anything
-   else to the same place, such as an error on standard error. *)
+   else to the same place, such as an error on standard error.
+
+   ToRope keeps output in a rope instead, until TakeRope: so the
+   character generator, which copies this module, shows a character
+   formatted in a window. *)
 
 IMPORT Platform, Ropes, SYSTEM;
 
@@ -20,6 +24,8 @@ CONST
 VAR
   fd: Platform.FileHandle;        (* where output goes *)
   toFile: BOOLEAN;                (* fd is a file from ToFile, not stdout *)
+  toRope: BOOLEAN;                (* output goes to kept, from ToRope *)
+  kept: Ropes.Rope;               (* what was written since ToRope *)
   buf: ARRAY BufSize OF CHAR;
   used: LONGINT;
   error-: Platform.ErrorCode;     (* the first write error, 0 if none *)
@@ -29,8 +35,11 @@ PROCEDURE Flush*;
   VAR e: Platform.ErrorCode;
 BEGIN
   IF used > 0 THEN
-    e := Platform.Write(fd, SYSTEM.ADR(buf[0]), used);
-    IF (e # 0) & (error = 0) THEN error := e END;
+    IF toRope THEN kept := Ropes.Cat(kept, Ropes.FromSubstring(buf, 0, used))
+    ELSE
+      e := Platform.Write(fd, SYSTEM.ADR(buf[0]), used);
+      IF (e # 0) & (error = 0) THEN error := e END
+    END;
     used := 0
   END
 END Flush;
@@ -92,6 +101,21 @@ BEGIN
   RETURN e
 END ToFile;
 
+(* Keeps output from now on in a rope, for TakeRope, instead of
+   writing it.  Output already written stays where it went. *)
+PROCEDURE ToRope*;
+BEGIN Flush; toRope := TRUE; kept := NIL
+END ToRope;
+
+(* What was written since ToRope (NIL, the empty rope, for nothing);
+   output from now on goes where it went before ToRope. *)
+PROCEDURE TakeRope*(): Ropes.Rope;
+  VAR r: Ropes.Rope;
+BEGIN
+  Flush; r := kept; kept := NIL; toRope := FALSE;
+  RETURN r
+END TakeRope;
+
 (* Flushes, closes the file if there is one, and goes back to standard
    output.  Returns the first error from writing or closing, 0 if
    none. *)
@@ -108,5 +132,5 @@ BEGIN
 END Close;
 
 BEGIN
-  fd := Platform.StdOut; toFile := FALSE; used := 0; error := 0
+  fd := Platform.StdOut; toFile := FALSE; toRope := FALSE; kept := NIL; used := 0; error := 0
 END Besm2Out.
