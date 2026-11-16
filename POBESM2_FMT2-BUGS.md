@@ -31,8 +31,25 @@ quietly with no error: polibfyaml bug 1 (`POLIBFYAML-BUGS.md`), caused
 by libfyaml issue 2 (`fy_diag_got_error` isn't set for a resolve
 failure; polibfyaml's `LIBFYAML-ISSUES.md`).
 
-**Status.** Open, waiting on the polibfyaml fix. Once it is in, add an
-undefined-alias case to the tests here.
+**Fix.** In polibfyaml 51c51ac ("FyamlStreams: report a resolve
+failure, not a quiet end"): `FyamlStreams` also checks
+`fy_parser_get_stream_error`, so a resolve failure is a `ParseError`
+(polibfyaml bug 1). Nothing changed in this program; it needed only a
+rebuild against the fixed library.
+
+**Verified** 2026-11-16, after `make install` in polibfyaml (and in
+ArgParser and Ropes, which the current poc needed rebuilt), then
+rebuilt here:
+
+```sh
+pobesm2_fmt2 alias.yaml; echo "rc=$?"
+# besm2_fmt: alias.yaml:1:10: error: invalid alias
+# rc=1
+```
+
+`make test` passes, including three cases added to `test/cli.sh`: an
+undefined alias, a cyclic reference, and a document before an undefined
+alias still written.
 
 ## 2. A customizer whose counts-as isn't a scalar halts the program
 
