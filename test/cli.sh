@@ -96,6 +96,14 @@ check "YAML of the wrong shape is an input error, not a halt" 1 \
 check "a customizer of one item is an input error, not a halt" 1 \
   'error processing .*shape-customizer-short\.yaml: /1/attributes/0/enhancements/0: customizer sequence too short$' \
   "$data/shape-customizer-short.yaml"
+# A counts-as that isn't a scalar is an input error, not a halt in
+# IntegerValue (POBESM2_FMT2-BUGS.md, bug 2).
+printf -- '- name: Good\n  stats: [{name: Body, value: 4, points: 8}]\n- name: Short\n  attributes: [{name: A, level: 1, points: 2, enhancements: [[Foo, {a: 1}]]}]\n' >"$tmp/enh.yaml"
+check "an enhancement's counts-as that is a mapping is an input error, not a halt" 1 \
+  'error processing .*enh\.yaml: /1/attributes/0/enhancements/0/1: not a scalar$' "$tmp/enh.yaml"
+printf -- '- name: Good\n  stats: [{name: Body, value: 4, points: 8}]\n- name: Short\n  attributes: [{name: A, level: 1, points: 2, limiters: [[Foo, [1]]]}]\n' >"$tmp/lim.yaml"
+check "a limiter's counts-as that is a sequence is an input error, not a halt" 1 \
+  'error processing .*lim\.yaml: /1/attributes/0/limiters/0/1: not a scalar$' "$tmp/lim.yaml"
 check "stats: with no value is an input error, not a halt" 1 \
   'error processing .*shape-null-stats\.yaml: /1/stats: not a sequence$' "$data/shape-null-stats.yaml"
 check "YAML that doesn't parse is reported gcc style" 1 \
